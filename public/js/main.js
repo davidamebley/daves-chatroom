@@ -2,6 +2,9 @@ const chatForm = document.getElementById('chat-form');
 const chatMessages = document.querySelector('.chat-messages');
 const roomNameElement = document.getElementById('room-name');
 const userListElement = document.getElementById('users');
+const messageFieldElement = document.getElementById('msg');
+const typingStatusElement = document.getElementById('typing-status');
+let typingTimerId;
 
 // Get username and chatroom category from query string. We use the QS library cdn
 const { username, room } = Qs.parse(location.search, {
@@ -30,6 +33,17 @@ socket.on('message', message => {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 });
 
+// Listen for typing event broadcast from server
+socket.on('userTypingBroadcast', (username)=>{
+    typingStatusElement.innerHTML = `<i>${username} Typing...</i>`
+    console.log('typing Broadcast')
+});
+
+// Listen for typing event broadcast from server
+socket.on('userStoppedTypingBroadcast', ()=>{
+    typingStatusElement.innerHTML = '';
+});
+
 // When User Sends a Message
 chatForm.addEventListener('submit', (e) =>{
     e.preventDefault();
@@ -44,6 +58,19 @@ chatForm.addEventListener('submit', (e) =>{
     e.target.elements.msg.value = '';
     e.target.elements.msg.focus();
 });
+
+//Listen to Typing event
+messageFieldElement.addEventListener('input', (event) => {
+  socket.emit('userTyping');
+
+  clearTimeout(typingTimerId);  //cancel timeout as user keeps typing
+  typingTimerId = setTimeout(() => {
+    // User stopped typing
+    socket.emit('userStoppedTyping'); //trigger timeout when user stops typing for a while
+  }, 500);
+
+});
+
 
 
 // Output Mssage Function

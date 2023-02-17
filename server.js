@@ -47,6 +47,21 @@ io.on('connection', (socket) => {
         io.to(user.room).emit('message', formatMessage(user.username, msg));
     });
 
+    //Listen for typing event
+    socket.on('userTyping', ()=>{
+        // Get current user
+        const user = getCurrentUser(socket.id);
+        // Emit typing status to other users
+        socket.broadcast.to(user.room).emit('userTypingBroadcast', user.username);
+    });
+    //Listen for stopped typing event
+    socket.on('userStoppedTyping', ()=>{
+        // Get current user
+        const user = getCurrentUser(socket.id);
+        // Emit typing status to other users
+        socket.broadcast.to(user.room).emit('userStoppedTypingBroadcast', '');
+    });
+
     // Broadcast to all users when user disconnects/leaves chatroom
     socket.on('disconnect', () => {
         const user = userLeave(socket.id);
